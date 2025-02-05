@@ -5,13 +5,24 @@ $username = "root";
 $password = "";
 $dbname = "login_db";
 
-// สร้างการเชื่อมต่อ
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// เช็คการเชื่อมต่อ
+
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
+$sql = "SELECT appointments_date FROM appointments_date";
+$result = $conn->query($sql);
+
+$bookedDates = [];
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $bookedDates[] = $row['appointments_date'];
+    }
+}
+
+echo "<script>var bookedDates = " . json_encode($bookedDates) . ";</script>";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $firstname = $_POST['firstname'] ?? '';
@@ -240,7 +251,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
         </form>
     </div>
-    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" >
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -255,100 +266,101 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
             </div>
         </div>
-        </div>
+    </div>
 
-        <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" >
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="errorModalLabel">❌ ข้อผิดพลาด</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        กรุณาใส่ข้อมูลใหม่
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-                    </div>
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel">❌ ข้อผิดพลาด</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    กรุณาใส่ข้อมูลใหม่
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
                 </div>
             </div>
         </div>
+    </div>
 
 
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 
-        <script>
-        $(document).ready(function() {
-            function showModal(modalId, message) {
-                $(`#${modalId} .modal-body`).text(message);
-                $(`#${modalId}`).modal('show');
-                $(`#${modalId}`).removeAttr("inert");
-            }
-            $("#appointmentForm").on("submit", function(e) {
-                e.preventDefault();
-                var formData = $(this).serialize();
+    <script>
+    $(document).ready(function() {
+        function showModal(modalId, message) {
+            $(`#${modalId} .modal-body`).text(message);
+            $(`#${modalId}`).modal('show');
+            $(`#${modalId}`).removeAttr("inert");
+        }
+        $("#appointmentForm").on("submit", function(e) {
+            e.preventDefault();
+            var formData = $(this).serialize();
 
-                $.ajax({
-                    url: "submit.php",
-                    type: "POST",
-                    data: formData,
-                    dataType: "json",
-                    success: function(response) {
-                        if (response.error) {
-                            showModal('errorModal', response.error);
-                        } else if (response.success) {
-                            showModal('successModal', "จองคิวเรียบร้อยแล้ว");
-                        }
-                    },
-                    error: function() {
-                        showModal('errorModal', "❌ เกิดข้อผิดพลาดในการส่งข้อมูล");
+            $.ajax({
+                url: "submit.php",
+                type: "POST",
+                data: formData,
+                dataType: "json",
+                success: function(response) {
+                    if (response.error) {
+                        showModal('errorModal', response.error);
+                    } else if (response.success) {
+                        showModal('successModal', "จองคิวเรียบร้อยแล้ว");
                     }
-                });
-            });
-
-            $('#successModal, #errorModal').on('hidden.bs.modal', function() {
-                $(this).attr('inert', 'true');
-            });
-
-            $("#datepicker").datepicker({
-                dateFormat: "dd/mm/yy",
-                minDate: 0,
-                onSelect: function(dateText) {
-                    checkAvailability(dateText);
+                },
+                error: function() {
+                    showModal('errorModal', "❌ เกิดข้อผิดพลาดในการส่งข้อมูล");
                 }
             });
+        });
 
-            function checkAvailability(dateText) {
-                $.ajax({
-                    url: "check_availability.php",
-                    type: "POST",
-                    data: {
-                        appointment_date: dateText
-                    },
-                    dataType: "json",
-                    success: function(bookedTimes) {
-                        $("select[name='appointment_time'] option").each(function() {
-                            const isBooked = bookedTimes.includes($(this).val());
-                            $(this).prop("disabled", isBooked);
-                        });
-                    }
-                });
+        $('#successModal, #errorModal').on('hidden.bs.modal', function() {
+            $(this).attr('inert', 'true');
+        });
+
+        $("#datepicker").datepicker({
+            dateFormat: "dd/mm/yy",
+            minDate: 0,
+            beforeShowDay: function(date) {
+                var string = $.datepicker.formatDate('yy-mm-dd', date);
+                return [bookedDates.indexOf(string) == -1];
             }
         });
 
-        function validatePhone(input) {
-            const value = input.value;
-            const phonePattern = /^[0-9]{10}$/;
-            if (!phonePattern.test(value)) {
-                input.setCustomValidity("กรุณากรอกหมายเลขโทรศัพท์ที่ถูกต้อง (10 หลัก)");
-            } else {
-                input.setCustomValidity("");
-            }
+        function checkAvailability(dateText) {
+            $.ajax({
+                url: "check_availability.php",
+                type: "POST",
+                data: {
+                    appointment_date: dateText
+                },
+                dataType: "json",
+                success: function(bookedTimes) {
+                    $("select[name='appointment_time'] option").each(function() {
+                        const isBooked = bookedTimes.includes($(this).val());
+                        $(this).prop("disabled", isBooked);
+                    });
+                }
+            });
         }
-        </script>
+    });
+
+    function validatePhone(input) {
+        const value = input.value;
+        const phonePattern = /^[0-9]{10}$/;
+        if (!phonePattern.test(value)) {
+            input.setCustomValidity("กรุณากรอกหมายเลขโทรศัพท์ที่ถูกต้อง (10 หลัก)");
+        } else {
+            input.setCustomValidity("");
+        }
+    }
+    </script>
 </body>
 
 </html>
