@@ -1,5 +1,15 @@
 <?php
-require_once('db.php');
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "login_db";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
 if (isset($_POST['appointment_date'])) {
     $date = DateTime::createFromFormat('d/m/Y', $_POST['appointment_date']);

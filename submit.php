@@ -1,5 +1,16 @@
 <?php
-require_once('db.php');
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "login_db";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $firstname = $_POST['firstname'] ?? '';

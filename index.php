@@ -1,5 +1,4 @@
 <?php
-require_once('includes/config.php');
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -248,6 +247,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="d-flex justify-content-between" style="margin: 0 40px;">
                 <button type="submit" class="btn btn-primary w-48">ตกลง</button>
                 <button type="reset" class="btn btn-danger w-48">ยกเลิก</button>
+
             </div>
         </form>
     </div>
@@ -330,6 +330,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             beforeShowDay: function(date) {
                 var string = $.datepicker.formatDate('yy-mm-dd', date);
                 return [bookedDates.indexOf(string) == -1];
+            },
+            onSelect: function(dateText) {
+                checkAvailability(dateText);
             }
         });
 
